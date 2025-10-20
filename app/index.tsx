@@ -9,7 +9,7 @@ import FilterDate from '@/components/FilterDate';
 
 export default function Index() {
   const [allTransactions] = useState<TransactionData[]>(dataTransaction);
-  const [saldoData] = useState<SaldoData>(dataSaldo);
+  const [data] = useState<SaldoData>(dataSaldo);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionData[]>(dataTransaction);
 
   // State untuk filter tanggal
@@ -63,7 +63,7 @@ export default function Index() {
 
       {/* Saldo Utama */}
       <View className='bg-neutral-800 rounded-2xl py-6 mb-6 items-center justify-center'>
-        <Text className='text-white text-2xl font-bold'>{dataSaldo.saldo.toLocaleString("ID-id", {
+        <Text className='text-white text-2xl font-bold'>{data.saldo.toLocaleString("ID-id", {
           style: "currency",
           currency: "IDR",
           minimumFractionDigits: 0,
@@ -130,7 +130,7 @@ export default function Index() {
             </CartTransaction>
           ))
         ) : (
-          <Text className='text-gray-500 text-center mt-10'>Tidak ada transaksi pada rentang tanggal ini.</Text>
+          <Text className='text-gray-500 text-center mt-10'>Trasaksi Tidak Di Temukan.</Text>
         )}
 
         {/* Spacer untuk FAB */}
