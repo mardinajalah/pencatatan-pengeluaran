@@ -6,7 +6,7 @@ import ModalComponet from '@/components/ModalComponet';
 import { ArrowDownRightFromCircle, ArrowUpRightFromCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { z } from 'zod';
+import { set, z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
 import ModalItemAddTransaction from '@/components/ModalItemAddTransaction';
 
@@ -23,9 +23,9 @@ export default function Index() {
 
   // Schema validasi Zod
   const transactionSchema = z.object({
-    description: z.string().min(1, 'Deskripsi tidak boleh kosong'),
-    amount: z.string().min(1, 'Jumlah tidak boleh kosong'),
-    category: z.string().min(1, 'Kategori harus dipilih'),
+    description: z.string().min(4, 'Deskripsi tidak boleh kosong'),
+    amount: z.string().min(5, 'Jumlah tidak boleh kosong'),
+    category: z.string().min(5, 'Kategori harus dipilih'),
   });
 
   // State Modal
@@ -205,9 +205,18 @@ export default function Index() {
           amount={amount}
           category={category}
           errors={errors}
-          handleDescription={(text) => setDescription(text)}
-          handleAmount={(text) => setAmount(text)}
-          handleCategory={(text) => setCategory(text)}
+          handleDescription={(text) => {
+            setDescription(text);
+            setErrors((prev) => ({ ...prev, description: undefined }));
+          }}
+          handleAmount={(text) => {
+            setAmount(text);
+            setErrors((prev) => ({ ...prev, amount: undefined }));
+          }}
+          handleCategory={(text) => {
+            setCategory(text);
+            setErrors((prev) => ({ ...prev, category: undefined }));
+          }}
           handleIsModalVisible={() => setIsModalVisible(false)}
           handleSubmit={handleSubmit}
         />

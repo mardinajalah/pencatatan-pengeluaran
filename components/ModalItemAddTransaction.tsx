@@ -18,14 +18,14 @@ interface ItemModalAddTransactionProps {
   handleSubmit: () => void;
 }
 
-const ModalItemAddTransaction: React.FC<ItemModalAddTransactionProps> = ({description, amount, category, errors, handleDescription, handleAmount, handleCategory, handleIsModalVisible, handleSubmit}) => {
+const ModalItemAddTransaction: React.FC<ItemModalAddTransactionProps> = ({ description, amount, category, errors, handleDescription, handleAmount, handleCategory, handleIsModalVisible, handleSubmit }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const selectCategory = (selected: string) => {
     handleCategory(selected);
     setIsOpen(false);
   };
-  
+
   return (
     <View className='bg-white w-full rounded-2xl p-6'>
       <Text className='text-xl font-bold mb-4 text-center'>Tambah Transaksi</Text>
@@ -68,16 +68,16 @@ const ModalItemAddTransaction: React.FC<ItemModalAddTransactionProps> = ({descri
         {isOpen && (
           <View className='absolute -bottom-24 w-full z-10 border border-gray-300 rounded-lg mb-4 overflow-hidden'>
             <TouchableOpacity
-              onPress={() => selectCategory('pemasukan')}
-              className='px-3 py-2 bg-white'
-            >
-              <Text className='text-gray-800'>Pemasukan</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
               onPress={() => selectCategory('pengeluaran')}
               className='px-3 py-2 bg-white'
             >
               <Text className='text-gray-800'>Pengeluaran</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => selectCategory('pemasukan')}
+              className='px-3 py-2 bg-white'
+            >
+              <Text className='text-gray-800'>Pemasukan</Text>
             </TouchableOpacity>
           </View>
         )}
