@@ -4,7 +4,7 @@ import CartTransaction from '@/components/CartTransaction';
 import FilterDate from '@/components/FilterDate';
 import { ArrowDownRightFromCircle, ArrowUpRightFromCircle, ChevronDown, ChevronUp } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
 
@@ -202,86 +202,90 @@ export default function Index() {
         animationType='slide'
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View className='flex-1 bg-black/50 justify-center items-center px-6'>
-          <View className='bg-white w-full rounded-2xl p-6'>
-            <Text className='text-xl font-bold mb-4 text-center'>Tambah Transaksi</Text>
+        <TouchableWithoutFeedback onPress={() => setIsModalVisible(false)}>
+          <View className='flex-1 bg-black/50 justify-center items-center px-6'>
+            <TouchableWithoutFeedback>
+              <View className='bg-white w-full rounded-2xl p-6'>
+                <Text className='text-xl font-bold mb-4 text-center'>Tambah Transaksi</Text>
 
-            {/* Deskripsi */}
-            <View className='mb-3'>
-              <TextInput
-                placeholder='Deskripsi'
-                value={description}
-                onChangeText={setDescription}
-                className='border border-gray-300 rounded-lg px-3 py-2'
-              />
-              {errors.description && <Text className='text-red-500 text-sm'>{errors.description}</Text>}
-            </View>
+                {/* Deskripsi */}
+                <View className='mb-3'>
+                  <TextInput
+                    placeholder='Deskripsi'
+                    value={description}
+                    onChangeText={setDescription}
+                    className='border border-gray-300 rounded-lg px-3 py-2'
+                  />
+                  {errors.description && <Text className='text-red-500 text-sm'>{errors.description}</Text>}
+                </View>
 
-            {/* Jumlah */}
-            <View className='mb-3'>
-              <TextInput
-                placeholder='Jumlah'
-                value={amount}
-                onChangeText={setAmount}
-                keyboardType='numeric'
-                className='border border-gray-300 rounded-lg px-3 py-2'
-              />
-              {errors.amount && <Text className='text-red-500 text-sm'>{errors.amount}</Text>}
-            </View>
+                {/* Jumlah */}
+                <View className='mb-3'>
+                  <TextInput
+                    placeholder='Jumlah'
+                    value={amount}
+                    onChangeText={setAmount}
+                    keyboardType='numeric'
+                    className='border border-gray-300 rounded-lg px-3 py-2'
+                  />
+                  {errors.amount && <Text className='text-red-500 text-sm'>{errors.amount}</Text>}
+                </View>
 
-            {/* Dropdown kategori */}
-            <View className='relative mb-3'>
-              <View>
-                <TouchableOpacity
-                  onPress={() => setIsOpen(!isOpen)}
-                  className='border border-gray-300 rounded-lg px-3 py-2 flex-row justify-between items-center'
-                >
-                  <Text className='text-gray-800'>{category ? (category === 'pemasukan' ? 'Pemasukan' : 'Pengeluaran') : 'Pilih Kategori'}</Text>
-                  {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </TouchableOpacity>
-                {errors.category && <Text className='text-red-500 text-sm'>{errors.category}</Text>}
-              </View>
-              {isOpen && (
-                <View className='absolute -bottom-20 w-full z-10 border border-gray-300 rounded-lg mb-4 overflow-hidden'>
+                {/* Dropdown kategori */}
+                <View className='relative mb-3'>
+                  <View>
+                    <TouchableOpacity
+                      onPress={() => setIsOpen(!isOpen)}
+                      className='border border-gray-300 rounded-lg px-3 py-2 flex-row justify-between items-center'
+                    >
+                      <Text className='text-gray-800'>{category ? (category === 'pemasukan' ? 'Pemasukan' : 'Pengeluaran') : 'Pilih Kategori'}</Text>
+                      {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </TouchableOpacity>
+                    {errors.category && <Text className='text-red-500 text-sm'>{errors.category}</Text>}
+                  </View>
+                  {isOpen && (
+                    <View className='absolute -bottom-20 w-full z-10 border border-gray-300 rounded-lg mb-4 overflow-hidden'>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCategory('pemasukan');
+                          setIsOpen(false);
+                        }}
+                        className='px-3 py-2 bg-white'
+                      >
+                        <Text className='text-gray-800'>Pemasukan</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCategory('pengeluaran');
+                          setIsOpen(false);
+                        }}
+                        className='px-3 py-2 bg-white'
+                      >
+                        <Text className='text-gray-800'>Pengeluaran</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+
+                <View className='flex-row justify-between'>
                   <TouchableOpacity
-                    onPress={() => {
-                      setCategory('pemasukan');
-                      setIsOpen(false);
-                    }}
-                    className='px-3 py-2 bg-white'
+                    onPress={() => setIsModalVisible(false)}
+                    className='bg-gray-300 px-4 py-2 rounded-lg flex-1 mr-2 items-center'
                   >
-                    <Text className='text-gray-800'>Pemasukan</Text>
+                    <Text className='text-gray-800 font-semibold'>Batal</Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
-                    onPress={() => {
-                      setCategory('pengeluaran');
-                      setIsOpen(false);
-                    }}
-                    className='px-3 py-2 bg-white'
+                    onPress={handleSubmit}
+                    className='bg-neutral-900 px-4 py-2 rounded-lg flex-1 ml-2 items-center'
                   >
-                    <Text className='text-gray-800'>Pengeluaran</Text>
+                    <Text className='text-white font-semibold'>Simpan</Text>
                   </TouchableOpacity>
                 </View>
-              )}
-            </View>
-
-            <View className='flex-row justify-between'>
-              <TouchableOpacity
-                onPress={() => setIsModalVisible(false)}
-                className='bg-gray-300 px-4 py-2 rounded-lg flex-1 mr-2 items-center'
-              >
-                <Text className='text-gray-800 font-semibold'>Batal</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleSubmit}
-                className='bg-neutral-900 px-4 py-2 rounded-lg flex-1 ml-2 items-center'
-              >
-                <Text className='text-white font-semibold'>Simpan</Text>
-              </TouchableOpacity>
-            </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );
