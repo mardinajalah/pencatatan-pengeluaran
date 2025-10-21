@@ -3,12 +3,17 @@ import { dataTransaction, TransactionData } from '@/assets/data/DataTrasction';
 import CartTransaction from '@/components/CartTransaction';
 import FilterDate from '@/components/FilterDate';
 import ModalComponet from '@/components/ModalComponet';
+import ModalItemAddTransaction from '@/components/ModalItemAddTransaction';
 import { ArrowDownRightFromCircle, ArrowUpRightFromCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { set, z } from 'zod';
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
-import ModalItemAddTransaction from '@/components/ModalItemAddTransaction';
+
+// 📦 Import tambahan untuk export Excel
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import XLSX from 'xlsx';
 
 export default function Index() {
   const [allTransactions] = useState<TransactionData[]>(dataTransaction);
@@ -16,16 +21,16 @@ export default function Index() {
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionData[]>(dataTransaction);
 
   // State untuk filter tanggal
-  const [startDate, setStartDate] = useState(new Date(2025, 0, 1)); // 01/01/2025
-  const [endDate, setEndDate] = useState(new Date(2025, 0, 30)); // 30/01/2025
+  const [startDate, setStartDate] = useState(new Date(2025, 0, 1));
+  const [endDate, setEndDate] = useState(new Date(2025, 0, 30));
 
   const [errors, setErrors] = useState<{ description?: string; amount?: string; category?: string }>({});
 
   // Schema validasi Zod
   const transactionSchema = z.object({
     description: z.string().min(4, 'Deskripsi tidak boleh kosong'),
-    amount: z.string().min(5, 'Jumlah tidak boleh kosong'),
-    category: z.string().min(5, 'Kategori harus dipilih'),
+    amount: z.string().min(1, 'Jumlah tidak boleh kosong'),
+    category: z.string().min(1, 'Kategori harus dipilih'),
   });
 
   // State Modal
@@ -34,10 +39,10 @@ export default function Index() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
 
-  // Fungsi bantu untuk ubah teks "30 Januari 2025" → Date
+  // Fungsi bantu ubah teks tanggal → Date
   const parseDate = (dayString: string) => {
     try {
-      const parts = dayString.split(',')[1]?.trim(); // "30 Januari 2025"
+      const parts = dayString.split(',')[1]?.trim();
       const [day, monthName, year] = parts.split(' ');
       const monthMap: Record<string, number> = {
         Januari: 0,
@@ -59,7 +64,7 @@ export default function Index() {
     }
   };
 
-  // Filter data berdasarkan tanggal
+  // Filter data transaksi berdasar tanggal
   useEffect(() => {
     const filtered = allTransactions.filter((item) => {
       const date = parseDate(item.day);
@@ -68,15 +73,59 @@ export default function Index() {
     setFilteredTransactions(filtered);
   }, [startDate, endDate]);
 
+  // 🧾 Fungsi export Excel
+  const handleExportExcel = async () => {
+    try {
+      // 1️⃣ Flatten data transaksi agar bisa ditulis ke sheet
+      const rows: any[] = [];
+      filteredTransactions.forEach((group) => {
+        group.transactions.forEach((t) => {
+          rows.push({
+            Tanggal: group.day,
+            Waktu: t.time,
+            Deskripsi: t.description,
+            Jumlah: t.amount,
+            Kategori: t.category,
+          });
+        });
+      });
+
+      if (rows.length === 0) {
+        Alert.alert('Tidak ada data', 'Tidak ada transaksi yang dapat diexport.');
+        return;
+      }
+
+      // 2️⃣ Buat worksheet & workbook
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Transaksi');
+
+      // 3️⃣ Konversi ke base64
+      const wbout = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' });
+
+      const dir = FileSystem.documentDirectory;
+      if (!dir) {
+        Alert.alert('Gagal', 'Tidak dapat mengakses direktori dokumen.');
+        return;
+      }
+      const fileUri = `${dir}transaksi.xlsx`;
+
+      // 5️⃣ Tulis file sebagai base64
+      await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.Base64 });
+
+      // 6️⃣ Bagikan
+      await Sharing.shareAsync(fileUri);
+      
+    } catch (error) {
+      console.error('Gagal export Excel:', error);
+      Alert.alert('Gagal', 'Terjadi kesalahan saat export Excel.');
+    }
+  };
+
   const handleSubmit = () => {
-    const result = transactionSchema.safeParse({
-      description,
-      amount,
-      category,
-    });
+    const result = transactionSchema.safeParse({ description, amount, category });
 
     if (!result.success) {
-      // Ambil pesan error per field
       const fieldErrors = result.error.flatten().fieldErrors;
       setErrors({
         description: fieldErrors.description?.[0],
@@ -86,7 +135,6 @@ export default function Index() {
       return;
     }
 
-    // Jika valid
     setErrors({});
     const newTransaction = { description, amount, category };
     console.log('Transaksi baru:', newTransaction);
@@ -108,14 +156,13 @@ export default function Index() {
         />
       </View>
 
-      {/* Saldo Utama */}
+      {/* Saldo */}
       <View className='bg-neutral-800 rounded-2xl py-6 mb-6 items-center justify-center'>
         <Text className='text-white text-2xl font-bold'>
           {data.saldo.toLocaleString('ID-id', {
             style: 'currency',
             currency: 'IDR',
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
           })}
         </Text>
       </View>
@@ -123,19 +170,20 @@ export default function Index() {
       {/* Filter dan Export */}
       <View className='flex-row justify-between items-center mb-4'>
         <Text className='text-sm font-semibold text-gray-800'>Semua Transaksi</Text>
-
         <View className='flex-row gap-2 items-center'>
-          <TouchableOpacity className='border border-gray-400 px-2 py-1 rounded-md'>
-            <Text className='text-xs font-medium text-gray-800'>export</Text>
+          {/* 🔽 Tombol Export Excel */}
+          <TouchableOpacity
+            className='border border-gray-400 px-2 py-1 rounded-md'
+            onPress={handleExportExcel}
+          >
+            <Text className='text-xs font-medium text-gray-800'>Export Excel</Text>
           </TouchableOpacity>
 
-          {/* Start Date */}
+          {/* Start & End Date */}
           <FilterDate
             date={startDate}
             onChange={setStartDate}
           />
-
-          {/* End Date */}
           <FilterDate
             date={endDate}
             onChange={setEndDate}
@@ -179,14 +227,12 @@ export default function Index() {
             </CartTransaction>
           ))
         ) : (
-          <Text className='text-gray-500 text-center mt-10'>Trasaksi Tidak Di Temukan.</Text>
+          <Text className='text-gray-500 text-center mt-10'>Transaksi tidak ditemukan.</Text>
         )}
-
-        {/* Spacer untuk FAB */}
         <View className='h-24' />
       </ScrollView>
 
-      {/* Floating Action Button */}
+      {/* FAB Tambah Transaksi */}
       <TouchableOpacity
         className='absolute bottom-8 right-8 bg-neutral-900 rounded-full w-14 h-14 items-center justify-center shadow-lg'
         activeOpacity={0.7}
