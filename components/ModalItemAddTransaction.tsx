@@ -66,7 +66,7 @@ const ModalItemAddTransaction: React.FC<ItemModalAddTransactionProps> = ({descri
           {errors.category && <Text className='text-red-500 text-sm'>{errors.category}</Text>}
         </View>
         {isOpen && (
-          <View className='absolute -bottom-20 w-full z-10 border border-gray-300 rounded-lg mb-4 overflow-hidden'>
+          <View className='absolute -bottom-24 w-full z-10 border border-gray-300 rounded-lg mb-4 overflow-hidden'>
             <TouchableOpacity
               onPress={() => selectCategory('pemasukan')}
               className='px-3 py-2 bg-white'
