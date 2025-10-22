@@ -49,7 +49,7 @@ export default function Index() {
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     // contoh sederhana: reset data ke versi terbaru
-    setFilteredTransactions(dataTransaction);
+    setAllTransactions(dataTransaction)
     setData_saldo(dataSaldo)
 
     setRefreshing(false);
