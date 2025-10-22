@@ -7,7 +7,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import { ArrowDownRightFromCircle, ArrowUpRightFromCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { z } from 'zod';
+import { set, z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
 
 // 📦 Import tambahan untuk export Excel
@@ -50,6 +50,7 @@ export default function Index() {
 
     // contoh sederhana: reset data ke versi terbaru
     setFilteredTransactions(dataTransaction);
+    setData_saldo(dataSaldo)
 
     setRefreshing(false);
   };
