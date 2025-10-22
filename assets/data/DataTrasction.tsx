@@ -1,7 +1,7 @@
 export const dataTransaction = [
   {
     id: 1,
-    day: 'Hari Ini, 30 Januari 2025',
+    day: 'Rabu, 01 Oktober 2025',
     amount: '347.000',
     transactions: [
       {
@@ -29,7 +29,7 @@ export const dataTransaction = [
   },
   {
     id: 2,
-    day: 'Senin, 29 Januari 2025',
+    day: 'Kamis, 02 Oktober 2025',
     amount: '150.000',
     transactions: [
       {
@@ -57,7 +57,7 @@ export const dataTransaction = [
   },
   {
     id: 3,
-    day: 'Minggu, 28 Januari 2025',
+    day: 'Jumát, 03 Oktober 2025',
     amount: '500.000',
     transactions: [
       {

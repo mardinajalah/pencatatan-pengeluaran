@@ -24,8 +24,14 @@ export default function Index() {
   const [data] = useState<SaldoData>(dataSaldo);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionData[]>(dataTransaction);
 
-  const [startDate, setStartDate] = useState(new Date(2025, 0, 1));
-  const [endDate, setEndDate] = useState(new Date(2025, 0, 30));
+  // ⏰ Dapatkan bulan & tahun sekarang
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+
+  // 📅 Tanggal pertama dan terakhir bulan ini
+  const [startDate, setStartDate] = useState(new Date(currentYear, currentMonth, 1));
+  const [endDate, setEndDate] = useState(new Date(currentYear, currentMonth + 1, 0));
 
   const [errors, setErrors] = useState<{ description?: string; amount?: string; category?: string }>({});
 
@@ -136,7 +142,7 @@ export default function Index() {
     const newTransaction = {
       id: Date.now(),
       description,
-      amount: cleanAmount.toString(),
+      amount: cleanAmount.toLocaleString('id-ID'),
       category,
       time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
     };
@@ -159,7 +165,7 @@ export default function Index() {
               return {
                 ...t,
                 transactions: updatedTransactions,
-                amount: `Rp ${total.toLocaleString('id-ID')}`,
+                amount: total.toLocaleString('id-ID'),
               };
             }
             return t;
@@ -169,7 +175,7 @@ export default function Index() {
             {
               id: prev.length + 1,
               day,
-              amount: `Rp ${cleanAmount.toLocaleString('id-ID')}`,
+              amount: cleanAmount.toLocaleString('id-ID'),
               transactions: [newTransaction],
             },
             ...prev,
@@ -181,7 +187,6 @@ export default function Index() {
       setAmount('');
       setCategory('');
       setErrors({});
-      console.log('✅ Transaksi baru ditambahkan:', newTransaction);
     } catch (error) {
       console.error('Gagal menambahkan transaksi:', error);
     }
