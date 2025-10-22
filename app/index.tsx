@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 // 📦 Import tambahan untuk export Excel
 import * as FileSystem from 'expo-file-system/legacy';
@@ -16,6 +17,7 @@ import * as Sharing from 'expo-sharing';
 import XLSX from 'xlsx';
 
 export default function Index() {
+  const [isLoading, setIsLoading] = useState(true);
   const [allTransactions] = useState<TransactionData[]>(dataTransaction);
   const [data] = useState<SaldoData>(dataSaldo);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionData[]>(dataTransaction);
@@ -30,6 +32,12 @@ export default function Index() {
     amount: z.string().min(1, 'Jumlah tidak boleh kosong'),
     category: z.string().min(1, 'Kategori harus dipilih'),
   });
+
+  // simulasi loading pertama kali
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2000); // 2 detik
+    return () => clearTimeout(timer);
+  }, []);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [description, setDescription] = useState('');
@@ -121,6 +129,10 @@ export default function Index() {
     setAmount('');
     setCategory('');
   };
+
+  if (isLoading) {
+    return <SkeletonLoader />;
+  }
 
   return (
     <View className='flex-1 bg-white'>
