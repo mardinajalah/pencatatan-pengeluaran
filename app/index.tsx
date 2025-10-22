@@ -6,7 +6,7 @@ import ModalComponet from '@/components/ModalComponet';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { ArrowDownRightFromCircle, ArrowUpRightFromCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
 
@@ -18,6 +18,7 @@ import * as Sharing from 'expo-sharing';
 import XLSX from 'xlsx';
 
 export default function Index() {
+  const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [validated, setValidated] = useState(false);
   const [allTransactions, setAllTransactions] = useState<TransactionData[]>(dataTransaction);
@@ -41,6 +42,17 @@ export default function Index() {
     amount: z.string().min(1, 'Jumlah tidak boleh kosong'),
     category: z.string().min(1, 'Kategori harus dipilih'),
   });
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Simulasi loading, bisa kamu ganti dengan fetch data asli nanti
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // contoh sederhana: reset data ke versi terbaru
+    setFilteredTransactions(dataTransaction);
+
+    setRefreshing(false);
+  };
 
   // simulasi loading pertama kali
   useEffect(() => {
@@ -232,6 +244,14 @@ export default function Index() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 64, paddingBottom: 120 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#000']} // warna spinner (Android)
+            tintColor='#000' // warna spinner (iOS)
+          />
+        }
       >
         {/* Header */}
         <View className='w-full flex-row justify-between items-center mb-6'>
