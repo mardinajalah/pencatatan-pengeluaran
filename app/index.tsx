@@ -7,7 +7,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import { ArrowDownRightFromCircle, ArrowUpRightFromCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { set, z } from 'zod';
+import { z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
 
 // 📦 Import tambahan untuk export Excel
@@ -49,8 +49,11 @@ export default function Index() {
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     // contoh sederhana: reset data ke versi terbaru
-    setAllTransactions(dataTransaction)
-    setData_saldo(dataSaldo)
+    setAllTransactions(dataTransaction);
+    setData_saldo(dataSaldo);
+
+    setStartDate(new Date(currentYear, currentMonth, 1));
+    setEndDate(new Date(currentYear, currentMonth + 1, 0));
 
     setRefreshing(false);
   };
