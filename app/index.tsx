@@ -161,7 +161,7 @@ export default function Index() {
           return prev.map((t) => {
             if (t.day === day) {
               const updatedTransactions = [...t.transactions, newTransaction];
-              const total = updatedTransactions.reduce((acc, curr) => acc + parseInt(curr.amount), 0);
+              const total = updatedTransactions.reduce((acc, curr) => acc + parseInt(curr.amount.replace(/[^0-9]/g, '')), 0);
               return {
                 ...t,
                 transactions: updatedTransactions,
