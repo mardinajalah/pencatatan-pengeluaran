@@ -2,7 +2,7 @@ export const dataTransaction = [
   {
     id: 1,
     day: 'Rabu, 01 Oktober 2025',
-    amount: '347.000',
+    amount: '312.000',
     transactions: [
       {
         id: 1,
@@ -30,7 +30,7 @@ export const dataTransaction = [
   {
     id: 2,
     day: 'Kamis, 02 Oktober 2025',
-    amount: '150.000',
+    amount: '-165.000',
     transactions: [
       {
         id: 1,
@@ -52,34 +52,6 @@ export const dataTransaction = [
         description: 'makan malam',
         time: '07:30 PM',
         amount: '15.000',
-      }
-    ],
-  },
-  {
-    id: 3,
-    day: 'Jumát, 03 Oktober 2025',
-    amount: '500.000',
-    transactions: [
-      {
-        id: 1,
-        category: 'pemasukan',
-        description: 'gaji',
-        time: '09:00 AM',
-        amount: '500.000',
-      },
-      {
-        id: 2,
-        category: 'pengeluaran',
-        description: 'jajan',
-        time: '02:00 PM',
-        amount: '50.000',
-      },
-      {
-        id: 3,
-        category: 'pengeluaran',
-        description: 'makan siang',
-        time: '12:30 PM',
-        amount: '30.000',
       }
     ],
   }

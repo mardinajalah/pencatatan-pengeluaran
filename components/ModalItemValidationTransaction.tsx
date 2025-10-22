@@ -1,23 +1,22 @@
-import { View, Text, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 interface ModalItemValidationTransactionProps {
   desc: string;
   amount: string;
   category: string;
+  saldoError?: string;
   hendleClose: () => void;
   handleConfirm: () => void;
 }
 
-const ModalItemValidationTransaction: React.FC<ModalItemValidationTransactionProps> = ({ desc, amount, category, hendleClose, handleConfirm }) => {
+const ModalItemValidationTransaction: React.FC<ModalItemValidationTransactionProps> = ({ desc, amount, category, hendleClose, handleConfirm, saldoError }) => {
   return (
     <View className='bg-white w-full rounded-2xl p-6'>
       <Text className='text-xl font-bold mb-4 text-center'>Apakah Anda Yakin</Text>
 
       <View className='mb-6'>
-        <Text className='text-gray-700 text-center'>
-          Data yang telah disimpan tidak dapat diubah atau dihapus. Pastikan semua informasi sudah benar sebelum melanjutkan.
-        </Text>
+        <Text className='text-gray-700 text-center'>Data yang telah disimpan tidak dapat diubah atau dihapus. Pastikan semua informasi sudah benar sebelum melanjutkan.</Text>
       </View>
 
       {/* data */}
@@ -36,6 +35,8 @@ const ModalItemValidationTransaction: React.FC<ModalItemValidationTransactionPro
         </View>
       </View>
 
+      {saldoError ? <Text className='text-red-500 text-center my-4 font-medium'>{saldoError}</Text> : null}
+
       <View className='flex-row justify-between'>
         <TouchableOpacity
           onPress={hendleClose}
@@ -52,7 +53,7 @@ const ModalItemValidationTransaction: React.FC<ModalItemValidationTransactionPro
         </TouchableOpacity>
       </View>
     </View>
-  )
-}
+  );
+};
 
-export default ModalItemValidationTransaction
+export default ModalItemValidationTransaction;

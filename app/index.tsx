@@ -21,7 +21,8 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
   const [validated, setValidated] = useState(false);
   const [allTransactions, setAllTransactions] = useState<TransactionData[]>(dataTransaction);
-  const [data] = useState<SaldoData>(dataSaldo);
+  const [data_Saldo, setData_saldo] = useState<SaldoData>(dataSaldo);
+  const [saldoError, setSaldoError] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionData[]>(dataTransaction);
 
   // ⏰ Dapatkan bulan & tahun sekarang
@@ -135,18 +136,7 @@ export default function Index() {
   };
 
   const handleConfirmSubmittion = async () => {
-    setIsModalVisible(false);
-    setValidated(false);
-
     const cleanAmount = parseInt(amount.replace(/[^0-9]/g, '')) || 0;
-    const newTransaction = {
-      id: Date.now(),
-      description,
-      amount: cleanAmount.toLocaleString('id-ID'),
-      category,
-      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-    };
-
     const today = new Date();
     const dayName = today.toLocaleDateString('id-ID', { weekday: 'long' });
     const day = `${dayName}, ${today.getDate()} ${today.toLocaleDateString('id-ID', {
@@ -154,14 +144,50 @@ export default function Index() {
     })} ${today.getFullYear()}`;
 
     try {
+      let saldoCukup = true; // flag untuk cek apakah saldo mencukupi
+
       setAllTransactions((prev) => {
         const existingDay = prev.find((t) => t.day === day);
+        let newSaldo = data_Saldo.saldo;
+
+        if (category === 'pengeluaran') {
+          if (newSaldo < cleanAmount) {
+            setSaldoError('Saldo tidak mencukupi untuk melakukan transaksi ini.');
+            saldoCukup = false; // ❌ saldo tidak cukup
+            return prev; // hentikan update transaksi
+          }
+
+          setSaldoError(''); // ✅ reset error
+          newSaldo -= cleanAmount;
+          setData_saldo((prevSaldo) => ({
+            ...prevSaldo,
+            saldo: newSaldo,
+          }));
+        } else if (category === 'pemasukan') {
+          newSaldo += cleanAmount;
+          setData_saldo((prevSaldo) => ({
+            ...prevSaldo,
+            saldo: newSaldo,
+          }));
+        }
+
+        // transaksi baru
+        const newTransaction = {
+          id: Date.now(),
+          description,
+          amount: cleanAmount.toLocaleString('id-ID'),
+          category,
+          time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        };
 
         if (existingDay) {
           return prev.map((t) => {
             if (t.day === day) {
               const updatedTransactions = [...t.transactions, newTransaction];
-              const total = updatedTransactions.reduce((acc, curr) => acc + parseInt(curr.amount.replace(/[^0-9]/g, '')), 0);
+              const total = updatedTransactions.reduce((acc, curr) => {
+                const value = parseInt(curr.amount.replace(/[^0-9]/g, ''));
+                return curr.category === 'pemasukan' ? acc + value : acc - value;
+              }, 0);
               return {
                 ...t,
                 transactions: updatedTransactions,
@@ -183,10 +209,15 @@ export default function Index() {
         }
       });
 
-      setDescription('');
-      setAmount('');
-      setCategory('');
-      setErrors({});
+      // ✅ Tutup modal hanya kalau saldo cukup
+      if (saldoCukup) {
+        setIsModalVisible(false);
+        setValidated(false);
+        setDescription('');
+        setAmount('');
+        setCategory('');
+        setErrors({});
+      }
     } catch (error) {
       console.error('Gagal menambahkan transaksi:', error);
     }
@@ -214,7 +245,7 @@ export default function Index() {
         {/* Saldo */}
         <View className='bg-neutral-800 rounded-2xl py-6 mb-6 items-center justify-center'>
           <Text className='text-white text-2xl font-bold'>
-            {data.saldo.toLocaleString('ID-id', {
+            {data_Saldo.saldo.toLocaleString('ID-id', {
               style: 'currency',
               currency: 'IDR',
               minimumFractionDigits: 0,
@@ -325,8 +356,12 @@ export default function Index() {
             desc={description}
             amount={amount}
             category={category}
-            hendleClose={() => setValidated(false)}
+            hendleClose={() => {
+              setValidated(false);
+              setSaldoError('');
+            }}
             handleConfirm={handleConfirmSubmittion}
+            saldoError={saldoError}
           />
         )}
       </ModalComponet>
