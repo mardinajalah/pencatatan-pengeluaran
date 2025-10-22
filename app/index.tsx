@@ -3,22 +3,24 @@ import { dataTransaction, TransactionData } from '@/assets/data/DataTrasction';
 import CartTransaction from '@/components/CartTransaction';
 import FilterDate from '@/components/FilterDate';
 import ModalComponet from '@/components/ModalComponet';
-import ModalItemAddTransaction from '@/components/ModalItemAddTransaction';
+import SkeletonLoader from '@/components/SkeletonLoader';
 import { ArrowDownRightFromCircle, ArrowUpRightFromCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
-import SkeletonLoader from '@/components/SkeletonLoader';
 
 // 📦 Import tambahan untuk export Excel
+import ModalItemAddTransaction from '@/components/ModalItemAddTransaction';
+import ModalItemValidationTransaction from '@/components/ModalItemValidationTransaction';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import XLSX from 'xlsx';
 
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
-  const [allTransactions] = useState<TransactionData[]>(dataTransaction);
+  const [validated, setValidated] = useState(false);
+  const [allTransactions, setAllTransactions] = useState<TransactionData[]>(dataTransaction);
   const [data] = useState<SaldoData>(dataSaldo);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionData[]>(dataTransaction);
 
@@ -74,7 +76,7 @@ export default function Index() {
       return date >= startDate && date <= endDate;
     });
     setFilteredTransactions(filtered);
-  }, [startDate, endDate]);
+  }, [startDate, endDate, allTransactions]);
 
   const handleExportExcel = async () => {
     try {
@@ -123,11 +125,66 @@ export default function Index() {
       return;
     }
 
-    setErrors({});
+    setValidated(true);
+  };
+
+  const handleConfirmSubmittion = async () => {
     setIsModalVisible(false);
-    setDescription('');
-    setAmount('');
-    setCategory('');
+    setValidated(false);
+
+    const cleanAmount = parseInt(amount.replace(/[^0-9]/g, '')) || 0;
+    const newTransaction = {
+      id: Date.now(),
+      description,
+      amount: cleanAmount.toString(),
+      category,
+      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    const today = new Date();
+    const dayName = today.toLocaleDateString('id-ID', { weekday: 'long' });
+    const day = `${dayName}, ${today.getDate()} ${today.toLocaleDateString('id-ID', {
+      month: 'long',
+    })} ${today.getFullYear()}`;
+
+    try {
+      setAllTransactions((prev) => {
+        const existingDay = prev.find((t) => t.day === day);
+
+        if (existingDay) {
+          return prev.map((t) => {
+            if (t.day === day) {
+              const updatedTransactions = [...t.transactions, newTransaction];
+              const total = updatedTransactions.reduce((acc, curr) => acc + parseInt(curr.amount), 0);
+              return {
+                ...t,
+                transactions: updatedTransactions,
+                amount: `Rp ${total.toLocaleString('id-ID')}`,
+              };
+            }
+            return t;
+          });
+        } else {
+          return [
+            {
+              id: prev.length + 1,
+              day,
+              amount: `Rp ${cleanAmount.toLocaleString('id-ID')}`,
+              transactions: [newTransaction],
+            },
+            ...prev,
+          ];
+        }
+      });
+
+      setDescription('');
+      setAmount('');
+      setCategory('');
+      setErrors({});
+      console.log('✅ Transaksi baru ditambahkan:', newTransaction);
+    } catch (error) {
+      console.error('Gagal menambahkan transaksi:', error);
+    }
   };
 
   if (isLoading) {
@@ -170,8 +227,14 @@ export default function Index() {
             >
               <Text className='text-xs font-medium text-gray-800'>Export Excel</Text>
             </TouchableOpacity>
-            <FilterDate date={startDate} onChange={setStartDate} />
-            <FilterDate date={endDate} onChange={setEndDate} />
+            <FilterDate
+              date={startDate}
+              onChange={setStartDate}
+            />
+            <FilterDate
+              date={endDate}
+              onChange={setEndDate}
+            />
           </View>
         </View>
 
@@ -188,9 +251,15 @@ export default function Index() {
                   key={idx}
                   icon={
                     item.category === 'pemasukan' ? (
-                      <ArrowDownRightFromCircle size={18} color='white' />
+                      <ArrowDownRightFromCircle
+                        size={18}
+                        color='white'
+                      />
                     ) : (
-                      <ArrowUpRightFromCircle size={18} color='white' />
+                      <ArrowUpRightFromCircle
+                        size={18}
+                        color='white'
+                      />
                     )
                   }
                   description={item.description}
@@ -201,9 +270,7 @@ export default function Index() {
             </CartTransaction>
           ))
         ) : (
-          <Text className='text-gray-500 text-center mt-10'>
-            Transaksi tidak ditemukan.
-          </Text>
+          <Text className='text-gray-500 text-center mt-10'>Transaksi tidak ditemukan.</Text>
         )}
       </ScrollView>
 
@@ -221,26 +288,42 @@ export default function Index() {
         isModalVisible={isModalVisible}
         handleIsModalVisible={() => setIsModalVisible(false)}
       >
-        <ModalItemAddTransaction
-          description={description}
-          amount={amount}
-          category={category}
-          errors={errors}
-          handleDescription={(text) => {
-            setDescription(text);
-            setErrors((prev) => ({ ...prev, description: undefined }));
-          }}
-          handleAmount={(text) => {
-            setAmount(text);
-            setErrors((prev) => ({ ...prev, amount: undefined }));
-          }}
-          handleCategory={(text) => {
-            setCategory(text);
-            setErrors((prev) => ({ ...prev, category: undefined }));
-          }}
-          handleIsModalVisible={() => setIsModalVisible(false)}
-          handleSubmit={handleSubmit}
-        />
+        {!validated ? (
+          <ModalItemAddTransaction
+            description={description}
+            amount={amount}
+            category={category}
+            errors={errors}
+            handleDescription={(text) => {
+              setDescription(text);
+              setErrors((prev) => ({ ...prev, description: undefined }));
+            }}
+            handleAmount={(text) => {
+              setAmount(text);
+              setErrors((prev) => ({ ...prev, amount: undefined }));
+            }}
+            handleCategory={(text) => {
+              setCategory(text);
+              setErrors((prev) => ({ ...prev, category: undefined }));
+            }}
+            handleIsModalVisible={() => {
+              setIsModalVisible(false);
+              setErrors({});
+              setDescription('');
+              setAmount('');
+              setCategory('');
+            }}
+            handleSubmit={handleSubmit}
+          />
+        ) : (
+          <ModalItemValidationTransaction
+            desc={description}
+            amount={amount}
+            category={category}
+            hendleClose={() => setValidated(false)}
+            handleConfirm={handleConfirmSubmittion}
+          />
+        )}
       </ModalComponet>
     </View>
   );
