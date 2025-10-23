@@ -47,7 +47,7 @@ export default function Index() {
 
   const fetchSaldo = async () => {
     try {
-      const res = await axios.get('http://192.168.110.239:3000/saldo'); // ganti IP sesuai milik kamu
+      const res = await axios.get('http://192.168.110.240:3000/saldo'); // ganti IP sesuai milik kamu
       const saldoData = res.data.data[0];
       setData_saldo(saldoData);
     } catch (error) {
@@ -59,7 +59,7 @@ export default function Index() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await axios.get('http://192.168.110.239:3000/transaction');
+      const res = await axios.get('http://192.168.110.240:3000/transaction');
       setAllTransactions(res.data.data);
     } catch (error) {
       console.error('Gagal mengambil transaksi:', error);
@@ -196,7 +196,7 @@ export default function Index() {
       }
 
       // 🔹 Kirim transaksi ke backend
-      const res = await axios.post('http://192.168.110.239:3000/transaction', {
+      const res = await axios.post('http://192.168.110.240:3000/transaction', {
         day: today.toISOString(),
         amount: cleanAmount,
         transactions: [
@@ -214,12 +214,12 @@ export default function Index() {
 
       if (res.status === 201) {
         // 🔹 Update saldo di backend
-        await axios.put(`http://192.168.110.239:3000/saldo/${data_Saldo.id}`, {
+        await axios.put(`http://192.168.110.240:3000/saldo/${data_Saldo.id}`, {
           saldo: saldoBaru,
         });
 
         // 🔹 Refresh saldo dan transaksi
-        const [saldoRes, transaksiRes] = await Promise.all([axios.get('http://192.168.110.239:3000/saldo'), axios.get('http://192.168.110.239:3000/transaction')]);
+        const [saldoRes, transaksiRes] = await Promise.all([axios.get('http://192.168.110.240:3000/saldo'), axios.get('http://192.168.110.240:3000/transaction')]);
 
         setData_saldo(saldoRes.data.data[0]);
         setAllTransactions(transaksiRes.data.data);
