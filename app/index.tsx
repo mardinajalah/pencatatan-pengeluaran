@@ -1,5 +1,5 @@
-import { dataSaldo, SaldoData } from '@/assets/data/DataSaldo';
-import { dataTransaction, TransactionData } from '@/assets/data/DataTrasction';
+import { SaldoData } from '@/assets/data/DataSaldo';
+import { TransactionData } from '@/assets/data/DataTrasction';
 import CartTransaction from '@/components/CartTransaction';
 import FilterDate from '@/components/FilterDate';
 import ModalComponet from '@/components/ModalComponet';
@@ -17,14 +17,16 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import XLSX from 'xlsx';
 
+import axios from 'axios';
+
 export default function Index() {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [validated, setValidated] = useState(false);
-  const [allTransactions, setAllTransactions] = useState<TransactionData[]>(dataTransaction);
-  const [data_Saldo, setData_saldo] = useState<SaldoData>(dataSaldo);
+  const [allTransactions, setAllTransactions] = useState<TransactionData[]>([]);
+  const [data_Saldo, setData_saldo] = useState<SaldoData>({ id: 0, saldo: 0 });
   const [saldoError, setSaldoError] = useState('');
-  const [filteredTransactions, setFilteredTransactions] = useState<TransactionData[]>(dataTransaction);
+  const [filteredTransactions, setFilteredTransactions] = useState<TransactionData[]>(allTransactions);
 
   // ⏰ Dapatkan bulan & tahun sekarang
   const currentDate = new Date();
@@ -43,25 +45,45 @@ export default function Index() {
     category: z.string().min(1, 'Kategori harus dipilih'),
   });
 
+  const fetchSaldo = async () => {
+    try {
+      const res = await axios.get('http://192.168.110.239:3000/saldo'); // ganti IP sesuai milik kamu
+      const saldoData = res.data.data[0];
+      setData_saldo(saldoData);
+    } catch (error) {
+      console.error('Gagal mengambil data saldo:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      const res = await axios.get('http://192.168.110.239:3000/transaction');
+      setAllTransactions(res.data.data);
+    } catch (error) {
+      console.error('Gagal mengambil transaksi:', error);
+    }
+  };
+
   const handleRefresh = async () => {
     setRefreshing(true);
     // Simulasi loading, bisa kamu ganti dengan fetch data asli nanti
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // contoh sederhana: reset data ke versi terbaru
-    setAllTransactions(dataTransaction);
-    setData_saldo(dataSaldo);
-
     setStartDate(new Date(currentYear, currentMonth, 1));
     setEndDate(new Date(currentYear, currentMonth + 1, 0));
+
+    fetchSaldo()
+    fetchTransactions()
 
     setRefreshing(false);
   };
 
   // simulasi loading pertama kali
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2000); // 2 detik
-    return () => clearTimeout(timer);
+    fetchSaldo();
+    fetchTransactions();
   }, []);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -160,82 +182,62 @@ export default function Index() {
     })} ${today.getFullYear()}`;
 
     try {
-      let saldoCukup = true; // flag untuk cek apakah saldo mencukupi
+      let saldoSekarang = data_Saldo.saldo;
+      let saldoBaru = saldoSekarang;
 
-      setAllTransactions((prev) => {
-        const existingDay = prev.find((t) => t.day === day);
-        let newSaldo = data_Saldo.saldo;
-
-        if (category === 'pengeluaran') {
-          if (newSaldo < cleanAmount) {
-            setSaldoError('Saldo tidak mencukupi untuk melakukan transaksi ini.');
-            saldoCukup = false; // ❌ saldo tidak cukup
-            return prev; // hentikan update transaksi
-          }
-
-          setSaldoError(''); // ✅ reset error
-          newSaldo -= cleanAmount;
-          setData_saldo((prevSaldo) => ({
-            ...prevSaldo,
-            saldo: newSaldo,
-          }));
-        } else if (category === 'pemasukan') {
-          newSaldo += cleanAmount;
-          setData_saldo((prevSaldo) => ({
-            ...prevSaldo,
-            saldo: newSaldo,
-          }));
+      if (category === 'pengeluaran') {
+        if (saldoSekarang < cleanAmount) {
+          setSaldoError('Saldo tidak mencukupi untuk melakukan transaksi ini.');
+          return;
         }
+        saldoBaru -= cleanAmount;
+      } else if (category === 'pemasukan') {
+        saldoBaru += cleanAmount;
+      }
 
-        // transaksi baru
-        const newTransaction = {
-          id: Date.now(),
-          description,
-          amount: cleanAmount.toLocaleString('id-ID'),
-          category,
-          time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        };
-
-        if (existingDay) {
-          return prev.map((t) => {
-            if (t.day === day) {
-              const updatedTransactions = [...t.transactions, newTransaction];
-              const total = updatedTransactions.reduce((acc, curr) => {
-                const value = parseInt(curr.amount.replace(/[^0-9]/g, ''));
-                return curr.category === 'pemasukan' ? acc + value : acc - value;
-              }, 0);
-              return {
-                ...t,
-                transactions: updatedTransactions,
-                amount: total.toLocaleString('id-ID'),
-              };
-            }
-            return t;
-          });
-        } else {
-          return [
-            {
-              id: prev.length + 1,
-              day,
-              amount: cleanAmount.toLocaleString('id-ID'),
-              transactions: [newTransaction],
-            },
-            ...prev,
-          ];
-        }
+      // 🔹 Kirim transaksi ke backend
+      const res = await axios.post('http://192.168.110.239:3000/transaction', {
+        day: today.toISOString(),
+        amount: cleanAmount,
+        transactions: [
+          {
+            category,
+            description,
+            time: today.toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            amount: cleanAmount,
+          },
+        ],
       });
 
-      // ✅ Tutup modal hanya kalau saldo cukup
-      if (saldoCukup) {
+      if (res.status === 201) {
+        // 🔹 Update saldo di backend
+        await axios.put(`http://192.168.110.239:3000/saldo/${data_Saldo.id}`, {
+          saldo: saldoBaru,
+        });
+
+        // 🔹 Refresh saldo dan transaksi
+        const [saldoRes, transaksiRes] = await Promise.all([axios.get('http://192.168.110.239:3000/saldo'), axios.get('http://192.168.110.239:3000/transaction')]);
+
+        setData_saldo(saldoRes.data.data[0]);
+        setAllTransactions(transaksiRes.data.data);
+
+        // 🔹 Reset modal
         setIsModalVisible(false);
         setValidated(false);
         setDescription('');
         setAmount('');
         setCategory('');
         setErrors({});
+        setSaldoError('');
+      } else {
+        Alert.alert('Gagal', 'Transaksi gagal ditambahkan.');
       }
     } catch (error) {
       console.error('Gagal menambahkan transaksi:', error);
+      Alert.alert('Error', 'Terjadi kesalahan saat menambahkan transaksi.');
     }
   };
 
