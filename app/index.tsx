@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
 import ItemTransaction from '../components/ItemTransaction';
-import { BASEURL } from '@env';
+import { EXPO_PUBLIC_BASEURL } from '@env';
 
 // 📦 Import tambahan untuk export Excel
 import ModalItemAddTransaction from '@/components/ModalItemAddTransaction';
@@ -48,7 +48,7 @@ export default function Index() {
 
   const fetchSaldo = async () => {
     try {
-      const res = await axios.get(`${BASEURL}/saldo`); // ganti IP sesuai milik kamu
+      const res = await axios.get(`${EXPO_PUBLIC_BASEURL}/saldo`); // ganti IP sesuai milik kamu
       const saldoData = res.data.data[0];
       setData_saldo(saldoData);
     } catch (error) {
@@ -60,7 +60,7 @@ export default function Index() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await axios.get(`${BASEURL}/transaction`);
+      const res = await axios.get(`${EXPO_PUBLIC_BASEURL}/transaction`);
       setAllTransactions(res.data.data);
     } catch (error) {
       console.error('Gagal mengambil transaksi:', error);
@@ -197,7 +197,7 @@ export default function Index() {
       }
 
       // 🔹 Kirim transaksi ke backend
-      const res = await axios.post(`${BASEURL}/transaction`, {
+      const res = await axios.post(`${EXPO_PUBLIC_BASEURL}/transaction`, {
         day: today.toISOString(),
         amount: cleanAmount,
         transactions: [
@@ -215,12 +215,12 @@ export default function Index() {
 
       if (res.status === 201) {
         // 🔹 Update saldo di backend
-        await axios.put(`${BASEURL}/saldo/${data_Saldo.id}`, {
+        await axios.put(`${EXPO_PUBLIC_BASEURL}/saldo/${data_Saldo.id}`, {
           saldo: saldoBaru,
         });
 
         // 🔹 Refresh saldo dan transaksi
-        const [saldoRes, transaksiRes] = await Promise.all([axios.get(`${BASEURL}/saldo`), axios.get(`${BASEURL}/transaction`)]);
+        const [saldoRes, transaksiRes] = await Promise.all([axios.get(`${EXPO_PUBLIC_BASEURL}/saldo`), axios.get(`${EXPO_PUBLIC_BASEURL}/transaction`)]);
 
         setData_saldo(saldoRes.data.data[0]);
         setAllTransactions(transaksiRes.data.data);

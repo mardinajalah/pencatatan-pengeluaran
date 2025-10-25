@@ -1,11 +1,9 @@
-import { Stack } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+// @ts-ignore: side-effect CSS import has no type declarations in this project
 import "./global.css";
+import { Stack } from "expo-router";
 
 export default function RootLayout() {
   return (
-    <SafeAreaView className="flex-1">
-      <Stack screenOptions={{ headerShown: false }} />
-    </SafeAreaView>
+    <Stack screenOptions={{ headerShown: false }} />
   );
 }
